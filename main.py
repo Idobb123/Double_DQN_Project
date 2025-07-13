@@ -1,36 +1,55 @@
 import gymnasium as gym
-from FrozenLakeAgent import FrozenLakeAgent
-from BlackJackAgent import BlackjackAgent
+from gymnasium.wrappers import AtariPreprocessing, FrameStackObservation
+import torch
+import numpy as np
+from DQN import DQN
+import ale_py
 
-# env = gym.make('Blackjack-v1', natural=False, sab=False, render_mode="human")
-env = gym.make('ALE/Pacman-v5')
+def state_to_dqn_input(state_np):
+    """
+    Convert a (84, 84, 4) numpy array into a torch tensor for DQN input.
+    """
+    print(f"Original state shape: {state_np.shape}")
+    tensor = torch.tensor(state_np, dtype=torch.float32)
+    # tensor = tensor.permute(2, 0, 1)  # (H, W, C) → (C, H, W)
+    tensor = tensor.unsqueeze(0)     # Add batch dim → (1, C, H, W)
+    return tensor
 
-lr = 0.1
-epsilon = 0.1
-epsilon_decay = 0.002
-final_epsilon = 0
-discount_factor = 1
-agent = BlackjackAgent(env, lr, epsilon, epsilon_decay, final_epsilon, discount_factor)
+def play_trained_agent(model_path, episodes=1):
+    gym.register_envs(ale_py)
 
-# Reset the environment to generate the first observation
-observation, info = env.reset(seed=42)
-for _ in range(1000):
-    # this is where you would insert your policy
-    action = agent.get_action(observation)
-    # action = env.action_space.sample()
+    # Create env with render mode
+    env = gym.make('MsPacmanNoFrameskip-v4', render_mode='human')
+    env = AtariPreprocessing(env, grayscale_obs=True)
+    env = FrameStackObservation(env, stack_size=4)
 
-    # step (transition) through the environment with the action
-    # receiving the next observation, reward and if the episode has terminated or truncated
-    next_observation, reward, terminated, truncated, info = env.step(action)
+    # Determine number of actions
+    num_actions = env.action_space.n
 
-    # Update agent
-    agent.update(observation, action, float(reward), terminated, next_observation)
-    observation = next_observation
-    agent.decay_epsilon()
+    # Load trained model
+    model = DQN(num_actions)
+    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+    model.eval()
 
-    # If the episode has ended then we can reset to start a new episode
-    if terminated or truncated:
-        observation, info = env.reset()
+    for ep in range(episodes):
+        state, _ = env.reset()
+        terminated = False
+        truncated = False
+        total_reward = 0
 
-env.close()
-agent.print()
+        while not (terminated or truncated):
+            state_tensor = state_to_dqn_input(state)
+            print(f"State shape: {state_tensor.shape}")
+
+            with torch.no_grad():
+                action = model(state_tensor).argmax().item()
+
+            state, reward, terminated, truncated, _ = env.step(action)
+            total_reward += reward
+
+        print(f"Episode {ep + 1} finished. Total reward: {total_reward}")
+
+    env.close()
+
+if __name__ == "__main__":
+    play_trained_agent("msPacMan_dqn.pt", episodes=3)
