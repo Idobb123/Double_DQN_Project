@@ -9,7 +9,6 @@ def state_to_dqn_input(state_np):
     """
     Convert a (84, 84, 4) numpy array into a torch tensor for DQN input.
     """
-    print(f"Original state shape: {state_np.shape}")
     tensor = torch.tensor(state_np, dtype=torch.float32)
     # tensor = tensor.permute(2, 0, 1)  # (H, W, C) → (C, H, W)
     tensor = tensor.unsqueeze(0)     # Add batch dim → (1, C, H, W)
@@ -39,7 +38,6 @@ def play_trained_agent(model_path, episodes=1):
 
         while not (terminated or truncated):
             state_tensor = state_to_dqn_input(state)
-            print(f"State shape: {state_tensor.shape}")
 
             with torch.no_grad():
                 action = model(state_tensor).argmax().item()
