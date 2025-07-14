@@ -13,6 +13,9 @@ from ReplayMemory import ReplayMemory
 from DQN import DQN, state_to_dqn_input
 
 gym.register_envs(ale_py)
+output_dir = 'output'  # Directory to save the model and plots
+weights_path = f"{output_dir}/weights"
+plots_path = f"{output_dir}/plots"
 
 class DQNtrainer():
     # Hyperparameters (adjustable)
@@ -27,99 +30,73 @@ class DQNtrainer():
     optimizer = None                # NN Optimizer. Initialize later.
 
     # Actions for the Atari environment
-    ACTIONS = ['NOOP', 'UP', 'RIGHT', 'LEFT', 'DOWN', 'UPRIGHT', 'UPLEFT', 'DOWNRIGHT', 'DOWNLEFT']
     num_actions = None  # This will be set during training
     
-    def train(self, episodes, gameName='BreakoutNoFrameskip-v4'):
-        # env = gym.make('ALE/Pacman-v5', render_mode=None)
-        env = gym.make(gameName, render_mode=None)
-        # print(f"Number of actions: {env.action_space}")
+    def train(self, episodes, gameName='BreakoutNoFrameskip-v4', render=False):
+        # environment setup
+        env = gym.make(gameName, render_mode='human' if render else None)
         env = AtariPreprocessing(env, grayscale_obs=True)
         env = FrameStackObservation(env, stack_size=4)
-
-        # Print the action space
         self.num_actions = env.action_space.n
-        
-        epsilon = 1 # 1 = 100% random actions
-        memory = ReplayMemory(self.replay_memory_size)
-
-        # Create policy and target network
-        policy_dqn = DQN(self.num_actions)
-        target_dqn = DQN(self.num_actions)
-
-        # Make the target and policy networks the same (copy weights/biases from one network to the other)
-        target_dqn.load_state_dict(policy_dqn.state_dict())
-
-        # Reset and take one random step
         state, _ = env.reset()
         state, reward, done, truncated, info = env.step(env.action_space.sample())
 
-        # Initialize rewards per episode
+        # misc setup
+        epsilon = 1 # 1 = 100% random actions
+        memory = ReplayMemory(self.replay_memory_size)
         rewards_per_episode = np.zeros(episodes)
         epsilon_history = []
 
-        # Policy network optimizer. "Adam" optimizer can be swapped to something else. 
-        self.optimizer = torch.optim.Adam(policy_dqn.parameters(), lr=self.learning_rate_a)
-
-        # Track number of steps taken. Used for syncing policy => target network.
+        # network setup
+        policy_dqn = DQN(self.num_actions)
+        target_dqn = DQN(self.num_actions)
+        target_dqn.load_state_dict(policy_dqn.state_dict())
         step_count=0
+        self.optimizer = torch.optim.Adam(policy_dqn.parameters(), lr=self.learning_rate_a)
 
         for i in range(episodes):
             print(f"Episode {i+1}/{episodes} started.")
             
-            state = env.reset()[0]  # Initialize to state 0
-            terminated = False      # True when agent falls in hole or reached goal
-            truncated = False       # True when agent takes more than 200 actions    
+            # init environment
+            state = env.reset()[0]
+            terminated, truncated = False, False
+            rewards_per_episode[i] = 0
 
             while(not terminated and not truncated):
-
                 # Select action based on epsilon-greedy
                 if random.random() < epsilon:
-                    # select random action
-                    action = env.action_space.sample() # actions: 0=left,1=down,2=right,3=up
+                    action = env.action_space.sample()
                 else:
-                    # select best action            
                     with torch.no_grad():
                         temp_state = state_to_dqn_input(state)
                         action = policy_dqn(temp_state).argmax().item()
 
-                # Execute action
+                # Take action in the environment
                 new_state,reward,terminated,truncated,_ = env.step(action)
-
-                # Save experience into memory
                 memory.append((state, action, new_state, reward, terminated)) 
-
-                # Move to the next state
                 state = new_state
-
-                # Increment step counter
+                rewards_per_episode[i] += reward
                 step_count+=1
 
-            # Keep track of the rewards collected per episode.
-            if reward == 1:
-                rewards_per_episode[i] = 1
+                # Check if enough experience has been collected
+                if len(memory)>self.mini_batch_size and np.sum(rewards_per_episode[:i+1]) > 0:
+                    mini_batch = memory.sample(self.mini_batch_size)
+                    self.optimize(mini_batch, policy_dqn, target_dqn)
 
-            # Check if enough experience has been collected and if at least 1 reward has been collected
-            # if len(memory)>self.mini_batch_size and np.sum(rewards_per_episode)>0:
-            if len(memory)>self.mini_batch_size:
-                mini_batch = memory.sample(self.mini_batch_size)
-                self.optimize(mini_batch, policy_dqn, target_dqn)        
-                # print(f"Episode {i+1}/{episodes} completed. Total reward: {np.sum(rewards_per_episode)}")
+                    # Copy policy network to target network after a certain number of steps
+                    if step_count > self.network_sync_rate:
+                        target_dqn.load_state_dict(policy_dqn.state_dict())
+                        step_count=0
 
-                # Decay epsilon
-                epsilon = max(epsilon - 1/episodes, 0)
-                epsilon_history.append(epsilon)
-
-                # Copy policy network to target network after a certain number of steps
-                if step_count > self.network_sync_rate:
-                    target_dqn.load_state_dict(policy_dqn.state_dict())
-                    step_count=0
+            # Decay epsilon
+            epsilon = max(epsilon - 1/episodes, 0)
+            epsilon_history.append(epsilon)
 
         # Close environment
         env.close()
 
         # Save policy
-        fileName = f"{gameName}.pt"
+        fileName = f"{weights_path}/{gameName}.pt"
         torch.save(policy_dqn.state_dict(), fileName)
 
         # Create new graph 
@@ -137,45 +114,45 @@ class DQNtrainer():
         plt.plot(epsilon_history)
         
         # Save plots
-        plotName = f"{gameName}_plot.png"
+        plotName = f"{plots_path}/{gameName}_plot.png"
         plt.savefig(plotName)
 
         return fileName
 
     def optimize(self, mini_batch, policy_dqn, target_dqn):
 
-        current_q_list = []
-        target_q_list = []
+        poilcy_q_values = []
+        target_q_values = []
 
         for state, action, new_state, reward, terminated in mini_batch:
 
             if terminated: 
                 # Agent either reached goal (reward=1) or fell into hole (reward=0)
                 # When in a terminated state, target q value should be set to the reward.
-                target = torch.FloatTensor([reward])
+                y = torch.FloatTensor([reward])
             else:
                 # Calculate target q value 
                 with torch.no_grad():
                     new_state = state_to_dqn_input(new_state)
                     target_max_value = target_dqn(new_state).max()  # Get the maximum Q value for the next state
 
-                    target = torch.FloatTensor(
+                    y = torch.FloatTensor(
                         reward + self.discount_factor_g * target_max_value
                     )
 
             # Get the current set of Q values
-            current_q = policy_dqn(state_to_dqn_input(state))
-            current_q_list.append(current_q)
+            current_q_value = policy_dqn(state_to_dqn_input(state))
+            poilcy_q_values.append(current_q_value)
 
             # Get the target set of Q values
             target_q = target_dqn(state_to_dqn_input(state))
             
             # Adjust the specific action to the target that was just calculated
-            target_q[0][action] = target
-            target_q_list.append(target_q)
+            target_q[0][action] = y
+            target_q_values.append(target_q)
                 
         # Compute loss for the whole minibatch
-        loss = self.loss_fn(torch.stack(current_q_list), torch.stack(target_q_list))
+        loss = self.loss_fn(torch.stack(poilcy_q_values), torch.stack(target_q_values))
 
         # Optimize the model
         self.optimizer.zero_grad()
@@ -184,4 +161,4 @@ class DQNtrainer():
 
 if __name__ == "__main__":
     pacman = DQNtrainer()
-    pacman.train(episodes=1000)  # Adjust the number of episodes as needed
+    pacman.train(episodes=10, render=False)  # Adjust the number of episodes as needed
