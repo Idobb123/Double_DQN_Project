@@ -5,49 +5,18 @@ import numpy as np
 from DQN import DQN
 import ale_py
 
-def state_to_dqn_input(state_np):
-    """
-    Convert a (84, 84, 4) numpy array into a torch tensor for DQN input.
-    """
-    tensor = torch.tensor(state_np, dtype=torch.float32)
-    # tensor = tensor.permute(2, 0, 1)  # (H, W, C) → (C, H, W)
-    tensor = tensor.unsqueeze(0)     # Add batch dim → (1, C, H, W)
-    return tensor
-
-def play_trained_agent(model_path, episodes=1):
-    gym.register_envs(ale_py)
-
-    # Create env with render mode
-    env = gym.make('MsPacmanNoFrameskip-v4', render_mode='human')
-    env = AtariPreprocessing(env, grayscale_obs=True)
-    env = FrameStackObservation(env, stack_size=4)
-
-    # Determine number of actions
-    num_actions = env.action_space.n
-
-    # Load trained model
-    model = DQN(num_actions)
-    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
-    model.eval()
-
-    for ep in range(episodes):
-        state, _ = env.reset()
-        terminated = False
-        truncated = False
-        total_reward = 0
-
-        while not (terminated or truncated):
-            state_tensor = state_to_dqn_input(state)
-
-            with torch.no_grad():
-                action = model(state_tensor).argmax().item()
-
-            state, reward, terminated, truncated, _ = env.step(action)
-            total_reward += reward
-
-        print(f"Episode {ep + 1} finished. Total reward: {total_reward}")
-
-    env.close()
+from dqn_trainer import DQNtrainer
+from dqn_agent import DQNAgent
 
 if __name__ == "__main__":
-    play_trained_agent("msPacMan_dqn.pt", episodes=3)
+    gameName = 'BreakoutNoFrameskip-v4'
+    weights_directory = 'output/weights'
+
+    # Create the trainer and train the model
+    trainer = DQNtrainer()
+    weightsFileName = trainer.train(episodes=1000, gameName=gameName)  # Train the model
+    model_path = f"{weights_directory}/{weightsFileName}"
+
+    # Create the agent and play the game
+    agent = DQNAgent(num_actions=trainer.num_actions, weights_path=model_path)
+    agent.play(gameName, episodes=3)  # Play with the trained agent
