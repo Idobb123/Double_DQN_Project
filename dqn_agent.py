@@ -4,11 +4,15 @@ from DQN import DQN, state_to_dqn_input
 from gymnasium.wrappers import AtariPreprocessing, FrameStackObservation
 import gymnasium as gym
 import ale_py
-
 import torch.nn as nn
 
+gym.register_envs(ale_py)
+
 class DQNAgent:
-    def __init__(self, num_actions, weights_path):
+    def __init__(self, game_name, weights_path):
+        # use dummy env to get the number of actions
+        env = gym.make(game_name, render_mode=None)
+        num_actions = env.action_space.n
         self.model = DQN(num_actions)
         self.model.load_state_dict(torch.load(weights_path, map_location=torch.device('cpu')))
         self.model.eval()
@@ -19,10 +23,9 @@ class DQNAgent:
             action = self.model(temp_state).argmax().item()
             return action
 
-    def play(self, gameName , episodes=3):
-        gym.register_envs(ale_py)
-        env = gym.make(gameName, render_mode='human')
-        env = AtariPreprocessing(env, grayscale_obs=True)
+    def play(self, game_name , episodes=3, disable_frame_skips=False):
+        env = gym.make(game_name, render_mode='human')
+        env = AtariPreprocessing(env, grayscale_obs=True, frame_skip=1 if disable_frame_skips else 4)
         env = FrameStackObservation(env, stack_size=4)
 
         for ep in range(episodes):
@@ -38,9 +41,11 @@ class DQNAgent:
         env.close()
 
 if __name__ == "__main__":
-    gameName = 'MsPacmanNoFrameskip-v4'
-    weights_path = f'output/weights/{gameName}.pt'  # Adjust the path as needed
-    num_actions = 9  # Example number of valid actions
+    game_name = 'MsPacmanNoFrameskip-v4'
+    game_name = 'ALE/Breakout-v5'
+    sanitized_game_name = game_name.replace('/', '_')  # Sanitize game name for file paths
 
-    agent = DQNAgent(num_actions, weights_path)
-    agent.play(gameName, episodes=10)  # Play with the trained agent
+    weights_path = f'output/weights/{sanitized_game_name}.pt'  # Adjust the path as needed
+
+    agent = DQNAgent(game_name, weights_path)
+    agent.play(game_name, episodes=10, disable_frame_skips=True)
