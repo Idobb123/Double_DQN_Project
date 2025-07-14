@@ -18,7 +18,7 @@ gym.register_envs(ale_py)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-class DQLAgent():
+class DQNagent():
     # Hyperparameters (adjustable)
     learning_rate_a = 0.00025       # learning rate (alpha)
     discount_factor_g = 0.99        # discount rate (gamma)    
@@ -189,5 +189,5 @@ class DQLAgent():
 
 
 if __name__ == "__main__":
-    pacman = DQLAgent()
+    pacman = DQNagent()
     pacman.train(episodes=10000)  # Adjust the number of episodes as needed
