@@ -36,6 +36,8 @@ class DQNAgent:
                 total_reward += reward
             print(f"Episode {ep+1}: Total Reward = {total_reward}")
 
+        env.close()
+
 # Example usage:
 # import gym
 # env = gym.make('CartPole-v1')
