@@ -28,7 +28,7 @@ class DQNtrainer():
     replay_memory_size = 10000
     mini_batch_size = 32
     train_frequency = 4  # Frequency of training updates
-    save_model_frequency = 100 # Save model every 100 episodes
+    save_model_frequency = 10000 # Save model every 100 episodes
 
     model = None
     loss_fn = nn.MSELoss()
@@ -37,16 +37,17 @@ class DQNtrainer():
 
     num_actions = None
     total_steps = 0
+    optimization_steps = 0
 
-    def train(self, episodes, gameName='BreakoutNoFrameskip-v4', render=False, disable_frame_skips=False):
+    def train(self, episodes, game_name='BreakoutNoFrameskip-v4', render=False, disable_frame_skips=False):
         # Environment setup
-        env = gym.make(gameName, render_mode='human' if render else None)
+        env = gym.make(game_name, render_mode='human' if render else None)
         env = AtariPreprocessing(env, grayscale_obs=True, frame_skip=1 if disable_frame_skips else 4)
         env = gym.wrappers.RecordEpisodeStatistics(env)
         env = FrameStackObservation(env, stack_size=4)
         self.num_actions = env.action_space.n
         state, _ = env.reset()
-        gameName = gameName.replace('/', '_')  # Sanitize game name for file paths
+        game_name = game_name.replace('/', '_')  # Sanitize game name for file paths
 
         epsilon = 1
         memory = ReplayMemory(self.replay_memory_size)
@@ -64,13 +65,6 @@ class DQNtrainer():
             state = env.reset()[0]
             terminated, truncated = False, False
             rewards_per_episode[i] = 0
-
-            # print(f"Initial state shape: {state.shape}")
-            # for i in range(4):  # Ensure we have 4 stacked frames
-            #     state, _, terminated, truncated, _ = env.step(env.action_space.sample())
-            #     image = Image.fromarray(state[i])
-            #     image.show(title=f"Initial State - Episode {i+1}")
-            # return
 
             while not terminated and not truncated:
                 if random.random() < epsilon:
@@ -91,7 +85,7 @@ class DQNtrainer():
                     mini_batch = memory.sample(self.mini_batch_size)
                     self.optimize(mini_batch, policy_dqn, target_dqn)
 
-                    if step_count > self.network_sync_rate:
+                    if self.optimization_steps > self.network_sync_rate:
                         target_dqn.load_state_dict(policy_dqn.state_dict())
                         step_count = 0
 
@@ -99,16 +93,20 @@ class DQNtrainer():
             epsilon_history.append(epsilon)
 
             if i % self.save_model_frequency == 0:
-                self.save_model(policy_dqn, f"{weights_path}/{gameName}_episode_{i}.pt")
+                self.save_model(policy_dqn, f"{weights_path}/{game_name}_episode_{i}.pt")
 
             # print total steps so far
             print(f"Total steps so far: {self.total_steps}")
-            
+
         env.close()
-        fileName = f"{weights_path}/{gameName}.pt"
+        fileName = f"{weights_path}/{game_name}.pt"
         torch.save(policy_dqn.state_dict(), fileName)
 
-        self.plot_results(rewards_per_episode, epsilon_history, gameName)
+        self.plot_results(rewards_per_episode, epsilon_history, game_name)
+
+        print()
+        print("=" * 50)
+        print(f"Training completed. Total steps: {self.total_steps}, Optimization steps: {self.optimization_steps}")
 
         return fileName
 
@@ -136,6 +134,7 @@ class DQNtrainer():
 
         loss = self.loss_fn(torch.stack(policy_q_values), torch.stack(target_q_values))
         self.loss_list.append(loss.item()) 
+        self.optimization_steps += 1
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -149,7 +148,7 @@ class DQNtrainer():
         self.model.load_state_dict(torch.load(file_name, map_location=device))
         self.model.eval()
 
-    def plot_results(self, rewards_per_episode, epsilon_history, gameName):
+    def plot_results(self, rewards_per_episode, epsilon_history, game_name):
         plt.figure(1)
 
         # Plot raw reward per episode
@@ -167,7 +166,7 @@ class DQNtrainer():
         plt.ylabel("Epsilon")
 
         # Save the figure
-        plotName = f"{plots_path}/{gameName}_plot.png"
+        plotName = f"{plots_path}/{game_name}_plot.png"
         plt.savefig(plotName)
 
         # plot enumarted loss_list
@@ -176,13 +175,19 @@ class DQNtrainer():
         plt.title("Loss per Optimization Step")
         plt.xlabel("Optimization Step")
         plt.ylabel("Loss")
-        plt.savefig(f"{plots_path}/{gameName}_loss_plot.png")
+        plt.savefig(f"{plots_path}/{game_name}_loss_plot.png")
+
+    def show_state_images(self, state):
+        for i in range(4):  # Ensure we have 4 stacked frames
+            image = Image.fromarray(state[i])
+            image.show(title=f"Initial State - Episode {i+1}")
+        return
 
 if __name__ == "__main__":
     start_time = time.time()
-    pacman = DQNtrainer()
-    pacman.train(episodes=100, gameName='ALE/Breakout-v5', render=False, disable_frame_skips=True)
-    # pacman.train(episodes=500, gameName='MsPacmanNoFrameskip-v4', render=False)
-    # pacman.train(episodes=500, render=False)
+    trainer = DQNtrainer()
+    trainer.train(episodes=100000, game_name='ALE/Breakout-v5', render=False, disable_frame_skips=True)
+    # trainer.train(episodes=500, game_name='MsPacmanNoFrameskip-v4', render=False)
+    # trainer.train(episodes=500, render=False)
     end_time = time.time()
     print(f"Training completed in {end_time - start_time:.2f} seconds.")
