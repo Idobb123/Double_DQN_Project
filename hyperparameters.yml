@@ -3,11 +3,39 @@ cartpole1:
   replay_memory_size: 100000
   mini_batch_size: 32
   epsilon_init: 1
-  epsilon_decay: 0.99995
+  epsilon_decay: 0.9995
   epsilon_min: 0.05
   episodes: 100000
   network_sync_rate: 10
   discount_factor: 0.99
   learning_rate: 0.001
   hidden_layer_size: 10
-  max_reward: 100000
+  max_reward: 10000
+
+car1:
+  env_id: MountainCar-v0
+  replay_memory_size: 100000
+  mini_batch_size: 32
+  epsilon_init: 1
+  epsilon_decay: 0.9995
+  epsilon_min: 0.05
+  episodes: 100000
+  network_sync_rate: 10
+  discount_factor: 0.99
+  learning_rate: 0.001
+  hidden_layer_size: 10
+  max_reward: 10000
+
+acrobot:
+  env_id: Acrobot-v1
+  replay_memory_size: 100000
+  mini_batch_size: 32
+  epsilon_init: 1
+  epsilon_decay: 0.9995
+  epsilon_min: 0.05
+  episodes: 100000
+  network_sync_rate: 10
+  discount_factor: 0.99
+  learning_rate: 0.001
+  hidden_layer_size: 10
+  max_reward: 10000

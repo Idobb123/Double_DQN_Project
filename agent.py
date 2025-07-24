@@ -1,19 +1,24 @@
+from abc import abstractmethod
 import torch
-import flappy_bird_gymnasium
 import gymnasium
 from dqn import DQN
 from replaymemory import ReplayMemory
 import yaml
 import random
 import numpy as np
+import matplotlib
+matplotlib.use('TkAgg')  # Set the backend
 import matplotlib.pyplot as plt
+import time
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 device = torch.device("cpu")  # Force CPU for compatibility
 
 class Agent():
+    suffix: str = ""
+
     def __init__(self, hyperparameter_set):
-        with open('flappyBird/hyperparameters.yml', 'r') as file:
+        with open('hyperparameters.yml', 'r') as file:
             all_hyperparameter_sets = yaml.safe_load(file)
             hyperparameters = all_hyperparameter_sets[hyperparameter_set]
             # print(hyperparameters)
@@ -37,7 +42,17 @@ class Agent():
         self.save_frequency = 2000
         self.loss_fn = torch.nn.MSELoss()    # loss function for training
 
+    @abstractmethod
+    def optimize(self, mini_batch, policy_dqn, target_dqn):
+        """
+        Perform a single optimization step using the given minibatch, policy network,
+        and target network. Must be implemented by subclasses.
+        """
+        pass
+
     def train(self, render=False):
+        stopwatch = time.time()
+
         env = gymnasium.make(self.env_id, render_mode="human" if render else None)
 
         num_features = env.observation_space.shape[0]
@@ -63,6 +78,12 @@ class Agent():
             episode_reward = 0
             while True and episode_reward < self.max_reward:
 
+                if time.time() - stopwatch >= 60:
+                    print(
+                        f"Episode {episode + 1}/{self.episodes}({step_count} steps), Reward: {episode_reward.item()}, Epsilon: {epsilon:.4f}")
+                    stopwatch = time.time()
+                # time.sleep(1)
+
                 if random.random() < epsilon:
                     action = env.action_space.sample()
                     action = torch.tensor(action, dtype=torch.int64).to(device)
@@ -70,7 +91,7 @@ class Agent():
                     with torch.no_grad():
                         action = policy_dqn(state.unsqueeze(0)).squeeze().argmax()
 
-                new_state, reward, terminated, _, info = env.step(action.item())
+                new_state, reward, terminated, truncated, info = env.step(action.item())
 
                 new_state = torch.tensor(new_state, dtype=torch.float32).to(device)  # Add batch dimension
                 reward = torch.tensor(reward, dtype=torch.float32).to(device)
@@ -80,7 +101,7 @@ class Agent():
                 episode_reward += reward
                 step_count += 1
 
-                if terminated:
+                if terminated or truncated:
                     break
 
             if len(memory) > self.mini_batch_size:
@@ -94,53 +115,22 @@ class Agent():
             epsilon = max(self.epsilon_min, epsilon * self.epsilon_decay)
             epsilon_history.append(epsilon)
 
-            if episode % 10 == 0:
-                print(f"Episode {episode + 1}/{self.episodes}, Reward: {episode_reward.item()}, Epsilon: {epsilon:.4f}")
-
-            if episode % self.save_frequency == 0:
-                self.save_graph(rewards_per_episode, epsilon_history)
-                self.save_weights(policy_dqn, episode)
-
             if episode_reward > best_reward:
                 best_reward = episode_reward
                 current_time = time.strftime("%H:%M:%S", time.localtime())
                 print(f"{current_time} : New best reward: {best_reward} at episode {episode + 1}")
+                self.save_weights(policy_dqn, episode)
+                self.save_graph(rewards_per_episode, epsilon_history)
 
         # save the trained model
-        sanitized_env_id = self.env_id.replace('/', '_')
-        torch.save(policy_dqn.state_dict(), f'flappyBird/{sanitized_env_id}_episode_{self.episodes}.pt')
+        # sanitized_env_id = self.env_id.replace('/', '_') + self.suffix
+        # torch.save(policy_dqn.state_dict(), f'{sanitized_env_id}_episode_{self.episodes}.pt')
 
-        self.save_graph(rewards_per_episode, epsilon_history)
-        self.save_weights(policy_dqn, self.episodes)
+        # self.save_graph(rewards_per_episode, epsilon_history)
+        # self.save_weights(policy_dqn, self.episodes)
 
         env.close()
-
-    def optimize(self, mini_batch, policy_dqn, target_dqn):
-        states, actions, new_states, rewards, terminations = zip(*mini_batch)
-
-        states = torch.stack(states)
-
-        actions = torch.stack(actions)
-
-        new_states = torch.stack(new_states)
-
-        rewards = torch.stack(rewards)
-        terminations = torch.tensor(terminations).float().to(device)
-
-        with torch.no_grad():
-            # Calculate target Q values (expected returns)
-            target_q = rewards + (1-terminations) * self.discount_factor * target_dqn(new_states).max(dim=1)[0]
-
-        # Calcuate Q values from current policy
-        current_q = policy_dqn(states).gather(dim=1, index=actions.unsqueeze(dim=1)).squeeze()
-
-        # Compute loss
-        loss = self.loss_fn(current_q, target_q)
-
-        # Optimize the model (backpropagation)
-        self.optimizer.zero_grad()  # Clear gradients
-        loss.backward()             # Compute gradients
-        self.optimizer.step()       # Update network parameters i.e. weights and biases
+        return rewards_per_episode, epsilon_history
 
     def run(self, weights_path):
         # Create the environment
@@ -189,21 +179,10 @@ class Agent():
         plt.subplots_adjust(wspace=1.0, hspace=1.0)
 
         # Save plots
-        fig.savefig(f"output/{self.env_id}_training_progress.png")
+        fig.savefig(f"output/{self.env_id+self.suffix}_training_progress.png")
         plt.close(fig)
 
     def save_weights(self, policy_dqn, current_episode):
         sanitized_env_id = self.env_id.replace('/', '_')
-        torch.save(policy_dqn.state_dict(), f'output/{sanitized_env_id}_episode_{current_episode}.pt')
+        torch.save(policy_dqn.state_dict(), f'output/{sanitized_env_id+self.suffix}_episode_{current_episode}.pt')
 
-if __name__ == "__main__":
-    # time the training
-    import time
-    start_time = time.time()
-    agent = Agent("cartpole1")
-    # agent.train(render=False)
-    # end_time = time.time()
-    # print(f"Training time: {end_time - start_time} seconds")
-
-
-    agent.run("output/CartPole-v1_episode_90000.pt")

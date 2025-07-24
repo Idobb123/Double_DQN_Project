@@ -13,6 +13,8 @@ class DoubleAgent(Agent):
     Qp(s, a) = r + γ * Qt(s', argmax(Qp(s', a'))
     where Qp is the policy network and Qt is the target network.
     """
+
+    suffix = "_ddqn"
     def optimize(self, mini_batch, policy_dqn, target_dqn):
         states, actions, new_states, rewards, terminations = zip(*mini_batch)
 

@@ -3,11 +3,14 @@ import torch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+
 class RegularAgent(Agent):
     """
     This class implements the optimization step done for a regular DQN agent.
     Calculates loss between current policy's Q values and target Q values.
     """
+
+    suffix = "_dqn"
     def optimize(self, mini_batch, policy_dqn, target_dqn):
         states, actions, new_states, rewards, terminations = zip(*mini_batch)
 
