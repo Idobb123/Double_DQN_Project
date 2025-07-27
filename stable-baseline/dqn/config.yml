@@ -1,0 +1,15 @@
+cartpole1:
+  env_id: "CartPole-v1"
+  learning_rate: 0.001
+  buffer_size: 100_000
+  learning_starts: 1000
+  batch_size: 32
+  gamma: 0.99
+  train_freq: 4
+  target_update_interval: 250
+  exploration_fraction: 0.1
+  exploration_final_eps: 0.02
+  verbose: 0
+  total_timesteps: 200_000
+  network_layers: [64, 64]
+  network_activation: "ReLU"
