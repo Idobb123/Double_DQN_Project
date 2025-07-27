@@ -1,1 +1,28 @@
+GIL MISSIONS:
+        == using stable baseline3 premade DQN ==
+    1. run dqn and ddqn on toy environment (cartpole, mountain car, etc.)
+        currently only works on cartpole, and does not exhibit the expected behavior
+    2. run dqn and ddqn on flappy bird (or some other harder environment)
+
+    3. once steps 1 and 2 are successful run the same with our own implemented code
+
 train DQN and DOUBLE DQN for 10000 and average out the improvement plots
+
+maybe take a pretrained CNN and fine tune it for the games
+
+25/7/2025 Gil Benchmark Stable Baseline3
+    Average training time : 378.99 seconds
+
+    used parameters:
+        env_id = "CartPole-v1"
+        learning_rate = 1e-3
+        buffer_size = 100_000
+        learning_starts = 1000
+        batch_size = 32
+        gamma = 0.99
+        train_freq = 4
+        target_update_interval = 250
+        exploration_fraction = 0.2
+        exploration_final_eps = 0.02
+        tensorboard_log = f"./{source_dir}/train_logs/"
+        verbose = 0
