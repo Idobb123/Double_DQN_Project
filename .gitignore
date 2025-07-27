@@ -3,3 +3,7 @@ venv/
 .venv/
 *.png
 *.pt
+logs/
+train_logs*/
+best_model
+qwop environment/

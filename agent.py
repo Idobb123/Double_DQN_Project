@@ -78,9 +78,9 @@ class Agent():
             episode_reward = 0
             while True and episode_reward < self.max_reward:
 
-                if time.time() - stopwatch >= 60:
-                    print(
-                        f"Episode {episode + 1}/{self.episodes}({step_count} steps), Reward: {episode_reward.item()}, Epsilon: {epsilon:.4f}")
+                if time.time() - stopwatch >= 5:
+                    current_time = time.strftime("%H:%M:%S", time.localtime())
+                    print(f"{current_time} : Episode {episode + 1}/{self.episodes}({step_count} steps), Reward: {episode_reward}, Epsilon: {epsilon:.4f}")
                     stopwatch = time.time()
                 # time.sleep(1)
 
