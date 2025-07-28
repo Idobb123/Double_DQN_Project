@@ -7,15 +7,31 @@ from run_agent import run_agent
 # "CartPole-v1"
 # "MountainCar-v0"
 # "LunarLander-v2"
+# "flappybird"
 
 if __name__ == "__main__":
-    # start = time.time()
-    # train_dqn()
-    # end = time.time()
-    # training_time = end - start
-    # print(f"Training completed in {training_time:.2f} seconds.")
+    output_dir = "cartpole"
+    config_name = "cartpole1"
+    env_id = "CartPole-v1"
 
-    plot_training("DQN", "./stable-baseline/dqn/train_logs/")
-    # run_agent(agent_type="DQN", env_id="flappybird", max_steps=10000)
-    # run_agent(agent_type="DQN", env_id="MountainCar-v0", max_steps=10000)
-    # run_agent(agent_type="DQN", env_id="CartPole-v1", max_steps=1000)
+    train_enabled = False
+    plot_enabled = False
+    play_enabled = True
+
+    # train agent
+    if train_enabled:
+        start = time.time()
+        train_dqn(config_name=config_name, output_path=f"stable_baseline/dqn/output/{output_dir}/{config_name}")
+        end = time.time()
+        print(f"Training time: {end - start:.2f} seconds".center(80, "="))
+
+    # present training and evaluation results
+    plot_name = f"DQN {config_name} training"
+    data_path = f"./stable-baseline/dqn/output/{output_dir}/{config_name}"
+    model_path = f"./{data_path}/best_model/best_model.zip"
+    
+    if plot_enabled:
+        plot_training(plot_name, data_path, save_dir=data_path)
+    
+    if play_enabled:
+        run_agent(agent_type="DQN", env_id=env_id, max_steps=10000, model_path=model_path)

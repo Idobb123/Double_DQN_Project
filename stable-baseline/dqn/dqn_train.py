@@ -14,8 +14,11 @@ import yaml
 from torch import nn
 import flappy_bird_gymnasium
 
-source_dir = "stable-baseline/dqn/"
-config_name = "flappybird1"  # Change this to select different configurations
+config_name = "cartpole1"  # Change this to select different configurations
+game_dir_name = "cartpole" # change this to select different output directories
+
+source_dir = f"stable-baseline/dqn" # source directory of the project
+output_path = f"{source_dir}/output/{game_dir_name}/{config_name}"  # output path for the model and logs
 
 # Load model parameters from YAML config file (same pattern as agent.py)
 def load_hyperparameters(hyperparameter_set):
@@ -36,7 +39,7 @@ def create_env(env_id, render=False):
         pass
     return gym.make(env_id, render_mode=render_mode)
 
-def create_model(env, params):
+def create_model(env, params, double_dqn_enabled=False):
     # load hyperparameters
     learning_rate = params['learning_rate']
     buffer_size = params['buffer_size']
@@ -48,7 +51,7 @@ def create_model(env, params):
     exploration_fraction = params['exploration_fraction']
     exploration_final_eps = params['exploration_final_eps']
     verbose = params['verbose']
-    tensorboard_log = f"./{source_dir}/train_logs/"
+    tensorboard_log = f"./{output_path}"
     network_layers = params['network_layers']
     network_activation = params['network_activation']
 
@@ -56,27 +59,29 @@ def create_model(env, params):
         'net_arch': network_layers,
         'activation_fn': getattr(nn, network_activation)  # Convert string to activation function
     }
-
-    model = DQN(
-        "MlpPolicy",
-        env,
-        learning_rate=learning_rate,
-        buffer_size=buffer_size,
-        learning_starts=learning_starts,
-        batch_size=batch_size,
-        gamma=gamma,
-        train_freq=train_freq,
-        target_update_interval=target_update_interval,
-        exploration_fraction=exploration_fraction,
-        exploration_final_eps=exploration_final_eps,
-        tensorboard_log=tensorboard_log,
-        verbose=verbose,
-        policy_kwargs=policy_kwargs
-    )
+    if double_dqn_enabled:
+        pass
+    else:
+        model = DQN(
+            "MlpPolicy",
+            env,
+            learning_rate=learning_rate,
+            buffer_size=buffer_size,
+            learning_starts=learning_starts,
+            batch_size=batch_size,
+            gamma=gamma,
+            train_freq=train_freq,
+            target_update_interval=target_update_interval,
+            exploration_fraction=exploration_fraction,
+            exploration_final_eps=exploration_final_eps,
+            tensorboard_log=tensorboard_log,
+            verbose=verbose,
+            policy_kwargs=policy_kwargs
+        )
     
     return model
 
-def train_dqn():
+def train_dqn(config_name=config_name, output_path=output_path):
     params = load_hyperparameters(config_name)
     env = create_env(params['env_id'])
     model = create_model(env, params)
@@ -85,7 +90,7 @@ def train_dqn():
     eval_env = create_env(params['env_id'])
     eval_callback = EvalCallback(
         eval_env,
-        best_model_save_path=f"{source_dir}/best_model",
+        best_model_save_path=f"./{output_path}/best_model",
         eval_freq=10_000,
         n_eval_episodes=10,
         deterministic=True,
@@ -102,7 +107,7 @@ def train_dqn():
 
 if __name__ == "__main__":
     start = time.time()
-    train_dqn()
+    train_dqn(config_name=config_name, output_path=output_path)
     end = time.time()
     training_time = end - start
     print(f"Training time: {training_time:.2f} seconds".center(80, "="))

@@ -70,7 +70,7 @@ def load_latest(log_dir):
     
     return reward_events, epsilon_events
 
-def plot_training_progress(reward_events, epsilon_events, name):
+def plot_training_progress(reward_events, epsilon_events, name, save_dir=None):
     """Create plots for training progress"""
     if not reward_events:
         print("No reward data found!")
@@ -126,7 +126,10 @@ def plot_training_progress(reward_events, epsilon_events, name):
     
     plt.show()
 
-def plot_training(name, log_dir):
+    if save_dir:
+        plt.savefig(os.path.join(save_dir, f"{name}_training_progress.png"))
+
+def plot_training(name, log_dir, save_dir=None):
     """Main function to run the visualization"""
     # Load data
     reward_events, epsilon_events = load_latest(log_dir)
@@ -135,8 +138,8 @@ def plot_training(name, log_dir):
         return
     
     # Create plots
-    plot_training_progress(reward_events, epsilon_events, name)
-    
+    plot_training_progress(reward_events, epsilon_events, name, save_dir=save_dir)
+
 def plot_averaged_training(name, log_dir):
     """Plot averaged training data"""
     reward_values_list = []
