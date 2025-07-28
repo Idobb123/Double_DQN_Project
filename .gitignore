@@ -7,3 +7,5 @@ logs/
 train_logs*/
 best_model
 qwop environment/
+output*/
+archive*/
