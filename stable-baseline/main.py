@@ -14,8 +14,8 @@ if __name__ == "__main__":
     config_name = "car2"
     env_id = "MountainCar-v0"
 
-    train_enabled = False
-    plot_enabled = True
+    train_enabled = False # THIS WILL OVERWRITE THE MODEL
+    plot_enabled = False
     play_enabled = False
 
     # train agent
