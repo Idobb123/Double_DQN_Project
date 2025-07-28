@@ -12,9 +12,10 @@ from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.monitor import Monitor
 import yaml
 from torch import nn
+import flappy_bird_gymnasium
 
 source_dir = "stable-baseline/dqn/"
-config_name = "cartpole1"  # Change this to select different configurations
+config_name = "flappybird1"  # Change this to select different configurations
 
 # Load model parameters from YAML config file (same pattern as agent.py)
 def load_hyperparameters(hyperparameter_set):
@@ -25,13 +26,15 @@ def load_hyperparameters(hyperparameter_set):
         hyperparameters = all_hyperparameter_sets[hyperparameter_set]
     return hyperparameters
 
-def create_env(env_id):
+def create_env(env_id, render=False):
     """Create the environment using the specified env_id"""
+    render_mode = "human" if render else None
     if env_id == "flappybird":
-        pass
+        env = gym.make("FlappyBird-v0", render_mode=render_mode, use_lidar=False)
+        return env
     elif env_id == "qwop":
         pass
-    return gym.make(env_id, render_mode=None)
+    return gym.make(env_id, render_mode=render_mode)
 
 def create_model(env, params):
     # load hyperparameters
@@ -99,9 +102,7 @@ def train_dqn():
 
 if __name__ == "__main__":
     start = time.time()
-
     train_dqn()
-
     end = time.time()
     training_time = end - start
     print(f"Training time: {training_time:.2f} seconds".center(80, "="))
