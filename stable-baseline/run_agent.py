@@ -1,35 +1,32 @@
 import gymnasium as gym
 from stable_baselines3 import DQN
+from dqn.dqn_train import create_env
 
-agent_type = "Double DQN"  # "DQN" or "Double DQN"
-agent_type = "DQN"  # "DQN" or "Double DQN"
-env_id = "CartPole-v1"
-max_steps = 1000  # Maximum steps per episode
+def run_agent(agent_type="DQN", env_id="CartPole-v1", max_steps=1000):
+    """Run the specified agent type on the given environment."""
+    if agent_type == "Double DQN":
+        model_path = "stable-baseline/double dqn/best_model/best_model.zip"
+    elif agent_type == "DQN":
+        model_path = "stable-baseline/dqn/best_model/best_model.zip"
 
+    # === Load environment ===
+    env = create_env(env_id, render=True)
+    env = gym.wrappers.TimeLimit(env, max_episode_steps=max_steps)
 
-if agent_type == "Double DQN":
-    model_path = "stable-baseline/double dqn/best_model/best_model.zip"
-elif agent_type == "DQN":
-    model_path = "stable-baseline/dqn/best_model/best_model.zip"
+    # === Load the saved model ===
+    model = DQN.load(model_path)  # Adjust the path if needed
 
-# === Load environment ===
-env = gym.make(env_id, render_mode="human")  # render_mode="human" shows window
-env = gym.wrappers.TimeLimit(env, max_episode_steps=max_steps)
+    # === Run the agent ===
+    obs, _ = env.reset()
+    for step in range(max_steps):
+        action, _ = model.predict(obs, deterministic=True)
+        obs, reward, terminated, truncated, _ = env.step(action)
 
-# === Load the saved model ===
-model = DQN.load(model_path)  # Adjust the path if needed
+        if terminated:
+            print("Agent terminated the episode.")
+            obs, _ = env.reset()
 
-# === Run the agent ===
-obs, _ = env.reset()
-for step in range(max_steps):
-    action, _ = model.predict(obs, deterministic=True)
-    obs, reward, terminated, truncated, _ = env.step(action)
+    print()
+    print("Testing completed.")
 
-    if terminated:
-        print("Agent terminated the episode.")
-        obs, _ = env.reset()
-
-print()
-print("Testing completed.")
-
-env.close()
+    env.close()
