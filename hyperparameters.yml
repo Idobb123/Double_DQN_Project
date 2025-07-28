@@ -31,3 +31,20 @@ lunarlander1:
   second_layer_dim: 64
   max_reward: 10_000
   eval_freq: 5_000
+
+flappybird1:
+  env_id: FlappyBird-v0
+  learning_rate: 0.0005
+  replay_memory_size: 100_000
+  mini_batch_size: 64
+  discount_factor: 0.99
+  train_freq: 4
+  network_sync_rate: 1000
+  exploration_fraction: 0.3
+  epsilon_min: 0.05
+  epsilon_init: 1
+  episodes: 100000
+  first_layer_dim: 64
+  second_layer_dim: 64
+  max_reward: 10_000
+  eval_freq: 5_000

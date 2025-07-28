@@ -10,6 +10,7 @@ import matplotlib
 matplotlib.use('TkAgg')  # Set the backend
 import matplotlib.pyplot as plt
 import time
+import flappy_bird_gymnasium
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 device = torch.device("cpu")  # Force CPU for compatibility
@@ -53,7 +54,7 @@ class Agent():
         pass
 
     def train(self, render=False, total_steps=100_000):
-        env = gymnasium.make(self.env_id, render_mode="human" if render else None)
+        env = self.create_env(self.env_id, "human" if render else None)
 
         num_features = env.observation_space.shape[0]
         num_actions = env.action_space.n
@@ -133,9 +134,9 @@ class Agent():
         self.save_graph(step_rewards, epsilon_history)
         return rewards_per_episode, epsilon_history
 
-    def run(self, weights_path):
+    def run(self, weights_path, episodes=1,max_steps=2000):
         # Create the environment
-        env = gymnasium.make(self.env_id, render_mode="human")
+        env = self.create_env(self.env_id, "human")
 
         # Load the trained model
         num_features = env.observation_space.shape[0]
@@ -144,19 +145,29 @@ class Agent():
         self.policy_dqn = DQN(num_features, num_actions, self.first_layer_dim, self.second_layer_dim).to(device)
         self.policy_dqn.load_state_dict(torch.load(weights_path, map_location=device))
 
-        state, _ = env.reset()
-        state = torch.tensor(state, dtype=torch.float32).to(device)
-        while True:
-            with torch.no_grad():
-                action = self.policy_dqn(state.unsqueeze(0)).squeeze().argmax().item()
-            new_state, reward, terminated, _, info = env.step(action)
-            new_state = torch.tensor(new_state, dtype=torch.float32).to(device)
-            state = new_state
-
-            if terminated:
-                break
+        for episode in range(episodes):
+            state, _ = env.reset()
+            state = torch.tensor(state, dtype=torch.float32).to(device)
+            episode_reward = 0
+            for step in range(max_steps):
+                with torch.no_grad():
+                    action = self.policy_dqn(state.unsqueeze(0)).squeeze().argmax().item()
+                new_state, reward, terminated, _, info = env.step(action)
+                new_state = torch.tensor(new_state, dtype=torch.float32).to(device)
+                state = new_state
+                episode_reward += reward
+                if terminated:
+                    break
+            print(f"Episode {episode + 1}/{episodes}, Reward: {episode_reward}")
 
         env.close()
+
+    def create_env(self, env_id, render_mode=None):
+        if env_id == "FlappyBird-v0":
+            env = gymnasium.make("FlappyBird-v0", render_mode=render_mode, use_lidar=False)
+            return env
+        env = gymnasium.make(env_id, render_mode=render_mode)
+        return env
 
     def save_graph(self, step_rewards, epsilon_history):
         # Create dual-axis plot similar to visualize.py
