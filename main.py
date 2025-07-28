@@ -4,16 +4,16 @@ import time
 
 if __name__ == "__main__":
     # time the training
-    start_time = time.time()
-    print("just started")
+    # start_time = time.time()
+    # print("just started")
 
-    env_name = "acrobot"
-    doubleagent = DoubleAgent(env_name)
-    # doubleagent.train(render=False)
-    #
-    #
+    configuration_name = "lunarlander1"
+    # regularagent = RegularAgent(configuration_name)
+    # regularagent.train(render=False, total_steps=300_000)
+
+    doubleagent = DoubleAgent(configuration_name)
+    doubleagent.train(render=False, total_steps=300_000)
     # end_time = time.time()
     # print(f"Training time: {end_time - start_time} seconds")
 
-
-    doubleagent.run("output/Acrobot-v1_ddqn_episode_0.pt")
+    # regularagent.run("output/LunarLander-v2_dqn.pt")

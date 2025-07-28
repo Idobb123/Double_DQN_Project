@@ -3,39 +3,31 @@ cartpole1:
   replay_memory_size: 100000
   mini_batch_size: 32
   epsilon_init: 1
-  epsilon_decay: 0.9995
+  exploration_fraction: 0.3
   epsilon_min: 0.05
   episodes: 100000
-  network_sync_rate: 10
+  train_freq: 1
+  network_sync_rate: 20
   discount_factor: 0.99
   learning_rate: 0.001
-  hidden_layer_size: 10
-  max_reward: 10000
+  first_layer_dim: 64
+  second_layer_dim: 64
+  max_reward: 500
+  eval_freq: 1000
 
-car1:
-  env_id: MountainCar-v0
-  replay_memory_size: 100000
-  mini_batch_size: 32
-  epsilon_init: 1
-  epsilon_decay: 0.9995
-  epsilon_min: 0.05
-  episodes: 100000
-  network_sync_rate: 10
-  discount_factor: 0.99
+lunarlander1:
+  env_id: LunarLander-v2
   learning_rate: 0.001
-  hidden_layer_size: 10
-  max_reward: 10000
-
-acrobot:
-  env_id: Acrobot-v1
-  replay_memory_size: 100000
-  mini_batch_size: 32
-  epsilon_init: 1
-  epsilon_decay: 0.9995
-  epsilon_min: 0.05
-  episodes: 100000
-  network_sync_rate: 10
+  replay_memory_size: 100_000
+  mini_batch_size: 64
   discount_factor: 0.99
-  learning_rate: 0.001
-  hidden_layer_size: 10
-  max_reward: 10000
+  train_freq: 4
+  network_sync_rate: 20
+  exploration_fraction: 0.3
+  epsilon_min: 0.05
+  epsilon_init: 1
+  episodes: 100000
+  first_layer_dim: 64
+  second_layer_dim: 64
+  max_reward: 10_000
+  eval_freq: 5_000
