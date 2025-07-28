@@ -10,13 +10,13 @@ from run_agent import run_agent
 # "flappybird"
 
 if __name__ == "__main__":
-    output_dir = "cartpole"
-    config_name = "cartpole1"
-    env_id = "CartPole-v1"
+    output_dir = "mountaincar"  # Change this to select different output directories
+    config_name = "car2"
+    env_id = "MountainCar-v0"
 
     train_enabled = False
-    plot_enabled = False
-    play_enabled = True
+    plot_enabled = True
+    play_enabled = False
 
     # train agent
     if train_enabled:

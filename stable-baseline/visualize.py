@@ -124,10 +124,10 @@ def plot_training_progress(reward_events, epsilon_events, name, save_dir=None):
         print(f"Initial epsilon: {epsilon_values[0]:.4f}")
         print(f"Final epsilon: {epsilon_values[-1]:.4f}")
     
-    plt.show()
-
     if save_dir:
         plt.savefig(os.path.join(save_dir, f"{name}_training_progress.png"))
+
+    plt.show()
 
 def plot_training(name, log_dir, save_dir=None):
     """Main function to run the visualization"""
