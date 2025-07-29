@@ -46,7 +46,7 @@ class Agent():
         self.loss_fn = torch.nn.MSELoss()    # loss function for training
 
     @abstractmethod
-    def optimize(self, mini_batch, policy_dqn, target_dqn):
+    def update_network(self, mini_batch, policy_dqn, target_dqn):
         """
         Perform a single optimization step using the given minibatch, policy network,
         and target network. Must be implemented by subclasses.
@@ -104,7 +104,7 @@ class Agent():
             # optimization step
             if step % self.train_freq == 0 and len(memory) > self.mini_batch_size:
                 mini_batch = memory.sample(self.mini_batch_size)
-                self.optimize(mini_batch, policy_dqn, target_dqn)
+                self.update_network(mini_batch, policy_dqn, target_dqn)
 
             # check if episode is done
             if terminated or truncated:

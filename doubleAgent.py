@@ -16,7 +16,7 @@ class DoubleAgent(Agent):
     """
 
     suffix = "_ddqn"
-    def optimize(self, mini_batch, policy_dqn, target_dqn):
+    def update_network(self, mini_batch, policy_dqn, target_dqn):
         states, actions, new_states, rewards, terminations = zip(*mini_batch)
 
         states = torch.stack(states)

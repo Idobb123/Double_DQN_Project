@@ -1,11 +1,15 @@
 GIL MISSIONS:
         == using stable baseline3 premade DQN ==
-    1. run dqn and ddqn on toy environment (cartpole, mountain car, etc.)
-        currently only works on cartpole, and does not exhibit the expected behavior
-    2. run dqn and ddqn on flappy bird (or some other harder environment)
+    1. run dqn and ddqn on TOY environment (cartpole, mountain car, etc.)
+        training successful on cartpole(easy), mountaincar(hard-forgetful)
+    2. run dqn and ddqn on more COMPLICATED environments
+        flappybird(successful), lunarlander(successful) 
+    3. generate reference graphs and hyperparameters for each run
 
-    3. once steps 1 and 2 are successful run the same with our own implemented code
+    4. once steps 1 and 2 are successful run the same with our own implemented code
 
+WHAT TO SHOW:
+    1. DDQN is more stable than DQN
 train DQN and DOUBLE DQN for 10000 and average out the improvement plots
 
 maybe take a pretrained CNN and fine tune it for the games
