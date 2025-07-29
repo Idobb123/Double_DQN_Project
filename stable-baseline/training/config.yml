@@ -16,6 +16,22 @@ cartpole1:
   network_layers: [64, 64]
   network_activation: "ReLU"
 
+cartpole2:
+  env_id: "CartPole-v1"
+  learning_rate: 0.001
+  buffer_size: 100_000
+  learning_starts: 1000
+  batch_size: 32
+  gamma: 0.99
+  train_freq: 4
+  target_update_interval: 250
+  exploration_fraction: 0.1
+  exploration_final_eps: 0.02
+  verbose: 0
+  total_timesteps: 100_000
+  network_layers: [64, 64]
+  network_activation: "ReLU"
+
 # was successful, created DQN7
 car1:
   env_id: "MountainCar-v0"
@@ -52,7 +68,7 @@ car2:
 
 # created DQN9, Training time: 12130.84 seconds
 flappybird1:
-  env_id: "flappybird"
+  env_id: "FlappyBird-v0"
   learning_rate: 0.0005
   buffer_size: 100_000
   learning_starts: 3000
@@ -81,5 +97,37 @@ lunarlander1:
   exploration_final_eps: 0.01
   verbose: 0
   total_timesteps: 5_000_000
+  network_layers: [256,256]
+  network_activation: "ReLU"
+
+lunarlander2:
+  env_id: "LunarLander-v2"
+  learning_rate: 0.001
+  buffer_size: 100_000
+  learning_starts: 1_000
+  batch_size: 64
+  gamma: 0.99
+  train_freq: 4
+  target_update_interval: 20
+  exploration_fraction: 0.1
+  exploration_final_eps: 0.01
+  verbose: 0
+  total_timesteps: 1_000_000
+  network_layers: [256,256]
+  network_activation: "ReLU"
+
+qwop1:
+  env_id: "QWOP-v1"
+  learning_rate: 0.0005
+  buffer_size: 200_000
+  learning_starts: 3000
+  batch_size: 64
+  gamma: 0.99
+  train_freq: 1
+  target_update_interval: 10_000
+  exploration_fraction: 0.2
+  exploration_final_eps: 0.05
+  verbose: 1
+  total_timesteps: 1_000_000
   network_layers: [256,256]
   network_activation: "ReLU"

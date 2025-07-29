@@ -1,6 +1,6 @@
 import gymnasium as gym
 from stable_baselines3 import DQN
-from dqn.dqn_train import create_env
+from training.dqn_train import create_env
 
 def run_agent(agent_type="DQN", env_id="CartPole-v1", max_steps=1000, model_path=None):
     """Run the specified agent type on the given environment."""

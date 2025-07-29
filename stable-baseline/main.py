@@ -1,4 +1,4 @@
-from dqn.dqn_train import train_dqn
+from training.dqn_train import train_dqn, get_suffix, load_hyperparameters
 from visualize import plot_training, plot_averaged_training
 import time
 from run_agent import run_agent
@@ -10,28 +10,30 @@ from run_agent import run_agent
 # "flappybird"
 
 if __name__ == "__main__":
-    output_dir = "mountaincar"  # Change this to select different output directories
-    config_name = "car2"
-    env_id = "MountainCar-v0"
+    config_name = "cartpole2"
+    env_id = "CartPole-v1"
+    source_dir = f"stable-baseline/training"  # source directory of the project
 
-    train_enabled = False # THIS WILL OVERWRITE THE MODEL
-    plot_enabled = False
-    play_enabled = False
+    train_enabled = True  # THIS WILL OVERWRITE THE MODEL
+    double_dqn_enabled = True  # Set to True to enable Double DQN, False for standard DQN
+    plot_enabled = True
+    play_enabled = True
 
     # train agent
     if train_enabled:
         start = time.time()
-        train_dqn(config_name=config_name, output_path=f"stable_baseline/dqn/output/{output_dir}/{config_name}")
+        train_dqn(config_name=config_name, double_dqn=double_dqn_enabled)
         end = time.time()
         print(f"Training time: {end - start:.2f} seconds".center(80, "="))
 
     # present training and evaluation results
-    plot_name = f"DQN {config_name} training"
-    data_path = f"./stable-baseline/dqn/output/{output_dir}/{config_name}"
+    plot_name = f"{get_suffix(double_dqn_enabled)} {config_name}"
+    data_path = f"{source_dir}/output/{env_id}/{config_name}/{get_suffix(double_dqn_enabled)}"
     model_path = f"./{data_path}/best_model/best_model.zip"
     
     if plot_enabled:
+        print(f"Now viewing the training results in {data_path}".center(80, "="))
         plot_training(plot_name, data_path, save_dir=data_path)
-    
+
     if play_enabled:
         run_agent(agent_type="DQN", env_id=env_id, max_steps=10000, model_path=model_path)
