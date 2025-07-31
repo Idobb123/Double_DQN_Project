@@ -1,3 +1,10 @@
+RELEVANT MISSIONS:
+    1. Generate learning graphs for flappybird and lunarlander - DQN and DDQN
+    2. Compare in a similar way to the graph and showcase the DDQN improvement
+        Improving the overestimation, improving the variance, maybe even finding a better policy??
+
+
+old
 GIL MISSIONS:
         == using stable baseline3 premade DQN ==
     1. run dqn and ddqn on TOY environment (cartpole, mountain car, etc.)
@@ -7,6 +14,7 @@ GIL MISSIONS:
     3. generate reference graphs and hyperparameters for each run
 
     4. once steps 1 and 2 are successful run the same with our own implemented code
+
 
 WHAT TO SHOW:
     1. DDQN is more stable than DQN

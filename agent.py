@@ -134,13 +134,15 @@ class Agent():
         self.save_graph(step_rewards, epsilon_history)
         return rewards_per_episode, epsilon_history
 
-    def run(self, weights_path, episodes=1,max_steps=2000):
+    def run(self, weights_path, episodes=1,max_steps=2000, render=True):
         # Create the environment
-        env = self.create_env(self.env_id, "human")
+        env = self.create_env(self.env_id, render_mode="human" if render else None)
 
         # Load the trained model
         num_features = env.observation_space.shape[0]
         num_actions = env.action_space.n
+
+        rewards_per_episode = []
 
         self.policy_dqn = DQN(num_features, num_actions, self.first_layer_dim, self.second_layer_dim).to(device)
         self.policy_dqn.load_state_dict(torch.load(weights_path, map_location=device))
@@ -149,6 +151,7 @@ class Agent():
             state, _ = env.reset()
             state = torch.tensor(state, dtype=torch.float32).to(device)
             episode_reward = 0
+            reached_max_steps = True
             for step in range(max_steps):
                 with torch.no_grad():
                     action = self.policy_dqn(state.unsqueeze(0)).squeeze().argmax().item()
@@ -157,9 +160,18 @@ class Agent():
                 state = new_state
                 episode_reward += reward
                 if terminated:
+                    reached_max_steps = False
+                    rewards_per_episode.append(episode_reward)
                     break
+
+            if reached_max_steps:
+                print("REACHED MAX STEPS")
+            else:
+                print("episode terminated early")
+
             print(f"Episode {episode + 1}/{episodes}, Reward: {episode_reward}")
 
+        print(f"Average Reward over {episodes} episodes: {np.mean(rewards_per_episode):.2f} +- {np.std(rewards_per_episode):.2f}")
         env.close()
 
     def create_env(self, env_id, render_mode=None):

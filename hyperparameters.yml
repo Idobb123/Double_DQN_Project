@@ -32,6 +32,7 @@ lunarlander1:
   max_reward: 10_000
   eval_freq: 5_000
 
+# 100_000 steps
 flappybird1:
   env_id: FlappyBird-v0
   learning_rate: 0.0005
@@ -49,6 +50,7 @@ flappybird1:
   max_reward: 10_000
   eval_freq: 5_000
 
+# 2_000_000 steps
 flappybird2:
   env_id: FlappyBird-v0
   learning_rate: 0.0005
@@ -59,6 +61,42 @@ flappybird2:
   network_sync_rate: 1000
   exploration_fraction: 0.3
   epsilon_min: 0.05
+  epsilon_init: 1
+  episodes: 100000
+  first_layer_dim: 256
+  second_layer_dim: 256
+  max_reward: 1_000
+  eval_freq: 10_000
+
+# 100_000 steps
+flappybird3:
+  env_id: FlappyBird-v0
+  learning_rate: 0.0005
+  replay_memory_size: 200_000
+  mini_batch_size: 64
+  discount_factor: 0.99
+  train_freq: 1
+  network_sync_rate: 1000
+  exploration_fraction: 0.1
+  epsilon_min: 0.0
+  epsilon_init: 1
+  episodes: 100000
+  first_layer_dim: 256
+  second_layer_dim: 256
+  max_reward: 1_000
+  eval_freq: 10_000
+
+# 2_000_000 steps
+flappybird4:
+  env_id: FlappyBird-v0
+  learning_rate: 0.0005
+  replay_memory_size: 200_000
+  mini_batch_size: 64
+  discount_factor: 0.99
+  train_freq: 1
+  network_sync_rate: 1000
+  exploration_fraction: 0.1
+  epsilon_min: 0.0
   epsilon_init: 1
   episodes: 100000
   first_layer_dim: 256
