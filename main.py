@@ -8,20 +8,15 @@ import time
 # QWOP-v0
 
 if __name__ == "__main__":
-    # time the training
-    start_time = time.time()
-    # print("just started")
 
-    configuration_name = "flappybird4"
+    configuration_name = "lunarlander4-windy"
 
-    # regularagent = RegularAgent(configuration_name)
-    # regularagent.train(render=False, total_steps=2_000_000)
-    # regularagent.run("output/FlappyBird-v0_dqn.pt", episodes=3, max_steps=100_000)
-
+    regularagent = RegularAgent(configuration_name)
     doubleagent = DoubleAgent(configuration_name)
-    # doubleagent.train(render=False, total_steps=2_000_000)
-    end_time = time.time()
-    print(f"Training time: {end_time - start_time:.2f} seconds")
+    for i in range(1, 7):
+        regularagent.train(render=False, total_steps=200_000, index=i)
+        doubleagent.train(render=False, total_steps=200_000, index=i)
 
 
-    doubleagent.run("output/FlappyBird-v0_ddqn.pt", episodes=100, max_steps=100_000, render=False)
+    # regularagent.run("output/MountainCar-v0_dqn_002.pt", episodes=3, max_steps=10_000, render=True)
+    # doubleagent.run("output/LunarLander-v2_ddqn_20250804_111653.pt", episodes=50, max_steps=10_000, render=False)
