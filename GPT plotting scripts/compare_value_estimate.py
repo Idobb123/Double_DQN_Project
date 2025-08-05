@@ -91,7 +91,7 @@ def create_value_function_comparison(config_name="lunarlander4-windy"):
     print("Calculating ground truth value functions...")
     try:
         # dqn_groundtruth, ddqn_groundtruth = calculate_agent_groundtruth.get_agents_groundtruth(config=config_name, episodes=5, max_steps=1_000_000)
-        dqn_groundtruth, ddqn_groundtruth = calculate_agent_groundtruth.get_agents_groundtruth(config=config_name)
+        dqn_groundtruth, ddqn_groundtruth = calculate_agent_groundtruth.get_agents_groundtruth(config=config_name, episodes=10)
         print(f"DQN Ground Truth Value: {dqn_groundtruth:.4f}")
         print(f"DDQN Ground Truth Value: {ddqn_groundtruth:.4f}")
     except Exception as e:
@@ -456,7 +456,8 @@ def compare_algorithms(config_name="lunarlander4-windy"):
 
 if __name__ == "__main__":
     
-    config_name = "lunarlander4-windy"  # Default configuration
-    config_name = "flappybird1"  # Example configuration
+    config_name = "cartpole1"  # Default configuration
+    # config_name = "lunarlander4-windy"  # Default configuration
+    # config_name = "flappybird1"  # Example configuration
     
     compare_algorithms(config_name)
