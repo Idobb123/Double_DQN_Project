@@ -1,0 +1,11 @@
+Plotting -
+    In order to use the scripts in 'GPT plotting scripts' directory,
+    take out the scripts and place them in the main directory
+
+    P.S. - There are some hardcoded strings in some of the scripts.
+
+Benchmarking - 
+    StableBaseline3 library was setup in 'stable-baseline' directory for sanity checks.
+
+USE INSTRUCTION:
+    To train and run the agents, differ to the main.py file.

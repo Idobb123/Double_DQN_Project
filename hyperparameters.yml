@@ -84,6 +84,23 @@ cartpole1:
   max_reward: 500
   eval_freq: 5_000
 
+cartpole2:
+  env_id: CartPole-v1
+  learning_rate: 0.001
+  replay_memory_size: 100_000
+  mini_batch_size: 64
+  discount_factor: 0.99
+  train_freq: 1
+  network_sync_rate: 500
+  exploration_fraction: 0.3
+  epsilon_min: 0.05
+  epsilon_init: 1
+  episodes: 100000
+  first_layer_dim: 64
+  second_layer_dim: 64
+  max_reward: 1_000
+  eval_freq: 5_000
+
 mountaincar1:
   env_id: MountainCar-v0
   learning_rate: 0.0005
