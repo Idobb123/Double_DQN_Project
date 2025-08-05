@@ -253,7 +253,7 @@ class Agent():
         env.close()
         return rewards_per_episode, epsilon_history
 
-    def run(self, weights_path, episodes=1,max_steps=2000, render=True, debug=False):
+    def run(self, weights_path, episodes=1,max_steps=2000, render=True, debug=False, gamma=0.99, show_rewards=False):
         # Create the environment
         env = self.create_env(self.env_id, render_mode="human" if render else None)
 
@@ -262,6 +262,7 @@ class Agent():
         num_actions = env.action_space.n
 
         rewards_per_episode = []
+        discounted_rewards_per_episode = []
 
         self.policy_dqn = DQN(num_features, num_actions, self.first_layer_dim, self.second_layer_dim).to(device)
         self.policy_dqn.load_state_dict(torch.load(weights_path, map_location=device))
@@ -270,6 +271,8 @@ class Agent():
             state, _ = env.reset()
             state = torch.tensor(state, dtype=torch.float32).to(device)
             episode_reward = 0
+            discounted_reward = 0
+            current_gamma = 1 
             reached_max_steps = True
             for step in range(max_steps):
                 with torch.no_grad():
@@ -278,12 +281,17 @@ class Agent():
                 new_state = torch.tensor(new_state, dtype=torch.float32).to(device)
                 state = new_state
                 episode_reward += reward
+                discounted_reward += reward * current_gamma
+                current_gamma *= gamma
                 if terminated:
                     reached_max_steps = False
-                    rewards_per_episode.append(episode_reward)
                     break
+            
+            rewards_per_episode.append(episode_reward)
+            discounted_rewards_per_episode.append(discounted_reward)
 
             if reached_max_steps:
+                print ("reached max steps")
                 if debug:
                     print("REACHED MAX STEPS")
             else:
@@ -293,12 +301,14 @@ class Agent():
             if debug:
                 print(f"Episode {episode + 1}/{episodes}, Reward: {episode_reward}")
 
-        print(f"Average Reward over {episodes} episodes: {np.mean(rewards_per_episode):.2f} +- {np.std(rewards_per_episode):.2f}")
+        if show_rewards:
+            print(f"Average Reward over {episodes} episodes: {np.mean(rewards_per_episode):.2f} +- {np.std(rewards_per_episode):.2f}")
+            print(f"Average Discounted Reward over {episodes} episodes: {np.mean(discounted_rewards_per_episode):.2f} +- {np.std(discounted_rewards_per_episode):.2f}")
         env.close()
 
+        return np.mean(discounted_rewards_per_episode)
+
     def create_env(self, env_id, render_mode=None):
-        env = gymnasium.make("LunarLander-v2", render_mode=render_mode, enable_wind=True, wind_power=15, turbulence_power=1.5)
-        return env
         if env_id == "FlappyBird-v0":
             env = gymnasium.make("FlappyBird-v0", render_mode=render_mode, use_lidar=False)
             return env
