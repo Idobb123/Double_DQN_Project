@@ -3,6 +3,9 @@ from torch import nn
 import torch.nn.functional as F
 
 class DQN(nn.Module):
+    """
+    A simple Deep Q-Network (DQN) implementation.
+    """
 
     def __init__(self, state_dim, action_dim, hidden_dim1=256, hidden_dim2=256):
         super(DQN, self).__init__()
