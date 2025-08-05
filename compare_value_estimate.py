@@ -6,6 +6,7 @@ from doubleAgent import DoubleAgent
 import yaml
 import matplotlib.pyplot as plt
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
+import calculate_agent_groundtruth
 
 def load_hyperparameters():
     """Load hyperparameters from YAML file"""
@@ -80,10 +81,23 @@ def interpolate_value_functions(all_data, max_steps=None):
     
     return common_steps, interpolated_values
 
-def create_value_function_comparison():
+def create_value_function_comparison(config_name="lunarlander4-windy"):
     """Create comparison plot of value functions between DQN and DDQN"""
     print("\nCreating Value Function Comparison Plot...")
     print("=" * 50)
+    print(f"Using configuration: {config_name}")
+    
+    # Get ground truth values
+    print("Calculating ground truth value functions...")
+    try:
+        # dqn_groundtruth, ddqn_groundtruth = calculate_agent_groundtruth.get_agents_groundtruth(config=config_name, episodes=5, max_steps=1_000_000)
+        dqn_groundtruth, ddqn_groundtruth = calculate_agent_groundtruth.get_agents_groundtruth(config=config_name)
+        print(f"DQN Ground Truth Value: {dqn_groundtruth:.4f}")
+        print(f"DDQN Ground Truth Value: {ddqn_groundtruth:.4f}")
+    except Exception as e:
+        print(f"Error calculating ground truth: {e}")
+        dqn_groundtruth = None
+        ddqn_groundtruth = None
     
     # Load DQN value function data
     print("Loading DQN value function data...")
@@ -100,6 +114,13 @@ def create_value_function_comparison():
     # Create the plot
     fig, ax = plt.subplots(figsize=(12, 8))
     
+    # Define colors
+    color_dqn = 'tab:blue'
+    color_ddqn = 'tab:red'
+    
+    # Find x-axis range for ground truth lines
+    x_min, x_max = 0, 1
+    
     # Process DQN data
     if dqn_value_data:
         dqn_steps, dqn_interpolated = interpolate_value_functions(dqn_value_data)
@@ -108,8 +129,11 @@ def create_value_function_comparison():
             dqn_mean = np.mean(dqn_array, axis=0)
             dqn_std = np.std(dqn_array, axis=0)
             
+            # Update x-axis range
+            x_min = min(x_min, dqn_steps[0]) if len(dqn_steps) > 0 else x_min
+            x_max = max(x_max, dqn_steps[-1]) if len(dqn_steps) > 0 else x_max
+            
             # Plot DQN mean and std
-            color_dqn = 'tab:blue'
             ax.plot(dqn_steps, dqn_mean, color=color_dqn, linewidth=2, 
                    label=f'DQN Mean Value Function (n={len(dqn_interpolated)})', alpha=0.8)
             ax.fill_between(dqn_steps, dqn_mean - dqn_std, dqn_mean + dqn_std, 
@@ -126,8 +150,11 @@ def create_value_function_comparison():
             ddqn_mean = np.mean(ddqn_array, axis=0)
             ddqn_std = np.std(ddqn_array, axis=0)
             
+            # Update x-axis range
+            x_min = min(x_min, ddqn_steps[0]) if len(ddqn_steps) > 0 else x_min
+            x_max = max(x_max, ddqn_steps[-1]) if len(ddqn_steps) > 0 else x_max
+            
             # Plot DDQN mean and std
-            color_ddqn = 'tab:red'
             ax.plot(ddqn_steps, ddqn_mean, color=color_ddqn, linewidth=2, 
                    label=f'Double DQN Mean Value Function (n={len(ddqn_interpolated)})', alpha=0.8)
             ax.fill_between(ddqn_steps, ddqn_mean - ddqn_std, ddqn_mean + ddqn_std, 
@@ -136,13 +163,24 @@ def create_value_function_comparison():
             print(f"DDQN: Processed {len(ddqn_interpolated)} runs")
             print(f"DDQN Final Value Function: {ddqn_mean[-1]:.4f} ± {ddqn_std[-1]:.4f}")
     
+    # Add ground truth horizontal lines
+    if dqn_groundtruth is not None:
+        ax.axhline(y=dqn_groundtruth, color=color_dqn, linestyle='--', linewidth=2, 
+                  alpha=0.9, label=f'DQN Ground Truth ({dqn_groundtruth:.3f})')
+        print(f"Added DQN ground truth line at y={dqn_groundtruth:.4f}")
+    
+    if ddqn_groundtruth is not None:
+        ax.axhline(y=ddqn_groundtruth, color=color_ddqn, linestyle='--', linewidth=2, 
+                  alpha=0.9, label=f'DDQN Ground Truth ({ddqn_groundtruth:.3f})')
+        print(f"Added DDQN ground truth line at y={ddqn_groundtruth:.4f}")
+    
     # Formatting
     ax.set_xlabel('Training Steps', fontsize=12)
     ax.set_ylabel('Average Value Function (Max Q-Values)', fontsize=12)
     ax.grid(True, alpha=0.3)
     ax.legend(loc='lower right', fontsize=10)
     
-    plt.title('DQN vs Double DQN Value Function Comparison\nAverage Max Q-Values During Training', 
+    plt.title('DQN vs Double DQN Value Function Comparison\nAverage Max Q-Values During Training + Ground Truth', 
               fontsize=14, fontweight='bold')
     
     # Summary comparison
@@ -155,6 +193,15 @@ def create_value_function_comparison():
         print(f"DQN Final Value Function:    {dqn_final:.4f}")
         print(f"DDQN Final Value Function:   {ddqn_final:.4f}")
         print(f"Value Function Improvement:  {improvement:+.4f}")
+        
+        # Compare with ground truth if available
+        if dqn_groundtruth is not None:
+            dqn_error = abs(dqn_final - dqn_groundtruth)
+            print(f"DQN Error from Ground Truth: {dqn_error:.4f}")
+        
+        if ddqn_groundtruth is not None:
+            ddqn_error = abs(ddqn_final - ddqn_groundtruth)
+            print(f"DDQN Error from Ground Truth: {ddqn_error:.4f}")
         
         if improvement > 0:
             print("🎯 DDQN achieves higher value function estimates!")
@@ -323,41 +370,39 @@ def print_group_statistics(results, algorithm_name):
     
     return group_stats
 
-def compare_algorithms():
+def compare_algorithms(config_name="lunarlander4-windy"):
     """Main comparison function"""
     print("LUNARLANDER DQN vs DOUBLE DQN COMPARISON")
     print("=" * 80)
+    print(f"Using configuration: {config_name}")
     print("Evaluating trained models on 100 episodes each...")
     
     # Load hyperparameters
     hyperparams = load_hyperparameters()
     
-    # Find appropriate hyperparameter set for LunarLander
-    lunarlander_hyperparam_set = None
-    for name, params in hyperparams.items():
-        if params.get('env_id') == 'LunarLander-v2':
-            lunarlander_hyperparam_set = name
-            break
-    
-    if not lunarlander_hyperparam_set:
-        print("Error: No LunarLander-v2 hyperparameter set found!")
+    # Validate that the provided config exists
+    if config_name not in hyperparams:
+        print(f"Error: Configuration '{config_name}' not found in hyperparameters.yml!")
+        print(f"Available configurations: {list(hyperparams.keys())}")
         return
     
-    print(f"Using hyperparameter set: {lunarlander_hyperparam_set}")
+    config = hyperparams[config_name]
+    env_id = config.get('env_id')
+    print(f"Environment: {env_id}")
     
     # Evaluate DQN models
     dqn_results = evaluate_agent_models(
         RegularAgent, 
-        "LunarLander-v2_dqn_*.pt", 
-        lunarlander_hyperparam_set, 
+        f"{env_id}_dqn_*.pt", 
+        config_name, 
         episodes=100
     )
     
     # Evaluate DDQN models
     ddqn_results = evaluate_agent_models(
         DoubleAgent, 
-        "LunarLander-v2_ddqn_*.pt", 
-        lunarlander_hyperparam_set, 
+        f"{env_id}_ddqn_*.pt", 
+        config_name, 
         episodes=100
     )
     
@@ -407,7 +452,11 @@ def compare_algorithms():
                 print("Note: Install scipy for statistical significance testing")
     
     # Create value function comparison plot
-    create_value_function_comparison()
+    create_value_function_comparison(config_name)
 
 if __name__ == "__main__":
-    compare_algorithms()
+    
+    config_name = "lunarlander4-windy"  # Default configuration
+    config_name = "flappybird1"  # Example configuration
+    
+    compare_algorithms(config_name)
