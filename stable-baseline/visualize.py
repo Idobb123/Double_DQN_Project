@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from tensorboard.backend.event_processing import event_accumulator
 import numpy as np
 
-def load_data(log_dir, index):
+def load_tensorboard_data_by_index(log_dir, index):
     """Load data from TensorBoard logs for a specific index"""
     print(f"Loading TensorBoard logs from: {log_dir}")
     
@@ -39,7 +39,7 @@ def load_data(log_dir, index):
     
     return reward_events, epsilon_events
 
-def load_latest(log_dir):
+def load_latest_tensorboard_data(log_dir):
     """Load data from TensorBoard logs"""
     print(f"Loading TensorBoard logs from: {log_dir}")
     
@@ -70,7 +70,7 @@ def load_latest(log_dir):
     
     return reward_events, epsilon_events
 
-def plot_training_progress(reward_events, epsilon_events, name, save_dir=None):
+def create_dual_axis_training_plot(reward_events, epsilon_events, algorithm_name, save_dir=None):
     """Create plots for training progress"""
     if not reward_events:
         print("No reward data found!")
@@ -110,7 +110,7 @@ def plot_training_progress(reward_events, epsilon_events, name, save_dir=None):
         ax1.legend(loc='upper right')
         print("Note: No epsilon data found in logs")
     
-    plt.title(f"Training Progress - {name}", fontsize=16, fontweight='bold')
+    plt.title(f"Training Progress - {algorithm_name}", fontsize=16, fontweight='bold')
     plt.tight_layout()
     
     # Show statistics
@@ -125,27 +125,27 @@ def plot_training_progress(reward_events, epsilon_events, name, save_dir=None):
         print(f"Final epsilon: {epsilon_values[-1]:.4f}")
     
     if save_dir:
-        plt.savefig(os.path.join(save_dir, f"{name}_training_progress.png"))
+        plt.savefig(os.path.join(save_dir, f"{algorithm_name}_training_progress.png"))
 
     plt.show()
 
-def plot_training(name, log_dir, save_dir=None):
+def visualize_single_training_run(algorithm_name, log_dir, save_dir=None):
     """Main function to run the visualization"""
     # Load data
-    reward_events, epsilon_events = load_latest(log_dir)
+    reward_events, epsilon_events = load_latest_tensorboard_data(log_dir)
     
     if reward_events is None:
         return
     
     # Create plots
-    plot_training_progress(reward_events, epsilon_events, name, save_dir=save_dir)
+    create_dual_axis_training_plot(reward_events, epsilon_events, algorithm_name, save_dir=save_dir)
 
-def plot_averaged_training(name, log_dir):
+def visualize_averaged_training_runs(algorithm_name, log_dir):
     """Plot averaged training data"""
     reward_values_list = []
     epsilon_values_list = []
     for i in range(10):
-        reward_events, epsilon_events = load_data(log_dir, i)
+        reward_events, epsilon_events = load_tensorboard_data_by_index(log_dir, i)
         if reward_events:
             reward_values = [e.value for e in reward_events]
             reward_values_list.append(reward_values)
@@ -162,13 +162,13 @@ def plot_averaged_training(name, log_dir):
     avg_epsilon_values = np.mean(epsilon_values_list, axis=0)
 
     # Create plots
-    plot_training_progress(avg_reward_values, avg_epsilon_values, name)
+    create_dual_axis_training_plot(avg_reward_values, avg_epsilon_values, algorithm_name)
 
 if __name__ == "__main__":
     """plots the last training progress of DQN and Double DQN"""
-    plot_training("DQN", "./stable-baseline/dqn/train_logs/")
-    # plot_training("Double DQN", "./stable-baseline/double dqn/train_logs/")
+    visualize_single_training_run("DQN", "./stable-baseline/dqn/train_logs/")
+    # visualize_single_training_run("Double DQN", "./stable-baseline/double dqn/train_logs/")
 
     # Not sure if this works properly
-    # plot_averaged_training("Averaged DQN", "./stable-baseline/dqn/train_logs/")
-    # plot_averaged_training("Averaged Double DQN", "./stable-baseline/double dqn/train_logs/")
+    # visualize_averaged_training_runs("Averaged DQN", "./stable-baseline/dqn/train_logs/")
+    # visualize_averaged_training_runs("Averaged Double DQN", "./stable-baseline/double dqn/train_logs/")

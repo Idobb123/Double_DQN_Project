@@ -7,7 +7,7 @@ import time
 import gymnasium as gym
 from stable_baselines3 import DQN
 from stable_baselines3.common.evaluation import evaluate_policy
-from training.doubledqn import DoubleDQN
+from doubledqn import DoubleDQN
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.monitor import Monitor
 import yaml
@@ -15,8 +15,8 @@ from torch import nn
 import flappy_bird_gymnasium
 import qwop_gym
 
-config_name = "cartpole2"  # Change this to select different configurations
-double_dqn_enabled = True  # Set to True to enable Double DQN, False for standard DQN
+config_name = "flappybird2"  # Change this to select different configurations
+double_dqn_enabled = False  # Set to True to enable Double DQN, False for standard DQN
 source_dir = f"stable-baseline/training" # source directory of the project
 
 # Load model parameters from YAML config file (same pattern as agent.py)
@@ -135,7 +135,7 @@ def train_dqn(config_name=config_name, double_dqn=False):
 
 if __name__ == "__main__":
     start = time.time()
-    # train_dqn(config_name=config_name, double_dqn=double_dqn_enabled)
+    train_dqn(config_name=config_name, double_dqn=double_dqn_enabled)
     end = time.time()
     training_time = end - start
     print(f"Training time: {training_time:.2f} seconds".center(80, "="))

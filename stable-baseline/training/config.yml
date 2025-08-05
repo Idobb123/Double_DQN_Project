@@ -83,6 +83,24 @@ flappybird1:
   network_layers: [256,256]
   network_activation: "ReLU"
 
+# 4/8/2025 18:33 Gil and Ido verifying that something happens
+# testing difference between DQN and DDQN 
+flappybird2:
+  env_id: "FlappyBird-v0"
+  learning_rate: 0.0005
+  buffer_size: 100_000
+  learning_starts: 3000
+  batch_size: 64
+  gamma: 0.99
+  train_freq: 1
+  target_update_interval: 1000
+  exploration_fraction: 0.3
+  exploration_final_eps: 0.01
+  verbose: 0
+  total_timesteps: 500_000
+  network_layers: [256,256]
+  network_activation: "ReLU"
+
 # DQN10, Training time: 5166.31 seconds
 lunarlander1:
   env_id: "LunarLander-v2"
@@ -112,22 +130,6 @@ lunarlander2:
   exploration_fraction: 0.1
   exploration_final_eps: 0.01
   verbose: 0
-  total_timesteps: 1_000_000
-  network_layers: [256,256]
-  network_activation: "ReLU"
-
-qwop1:
-  env_id: "QWOP-v1"
-  learning_rate: 0.0005
-  buffer_size: 200_000
-  learning_starts: 3000
-  batch_size: 64
-  gamma: 0.99
-  train_freq: 1
-  target_update_interval: 10_000
-  exploration_fraction: 0.2
-  exploration_final_eps: 0.05
-  verbose: 1
-  total_timesteps: 1_000_000
+  total_timesteps: 200_000
   network_layers: [256,256]
   network_activation: "ReLU"

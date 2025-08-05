@@ -1,5 +1,5 @@
 from training.dqn_train import train_dqn, get_suffix, load_hyperparameters
-from visualize import plot_training, plot_averaged_training
+from visualize import visualize_single_training_run
 import time
 from run_agent import run_agent
 
@@ -10,14 +10,14 @@ from run_agent import run_agent
 # "flappybird"
 
 if __name__ == "__main__":
-    config_name = "cartpole2"
-    env_id = "CartPole-v1"
+    config_name = "lunarlander2"
+    env_id = "LunarLander-v2"
     source_dir = f"stable-baseline/training"  # source directory of the project
 
     train_enabled = True  # THIS WILL OVERWRITE THE MODEL
-    double_dqn_enabled = True  # Set to True to enable Double DQN, False for standard DQN
+    double_dqn_enabled = False  # Set to True to enable Double DQN, False for standard DQN
     plot_enabled = True
-    play_enabled = True
+    play_enabled = False
 
     # train agent
     if train_enabled:
@@ -33,7 +33,8 @@ if __name__ == "__main__":
     
     if plot_enabled:
         print(f"Now viewing the training results in {data_path}".center(80, "="))
-        plot_training(plot_name, data_path, save_dir=data_path)
+        visualize_single_training_run(plot_name, data_path, save_dir=data_path)
 
     if play_enabled:
         run_agent(agent_type="DQN", env_id=env_id, max_steps=10000, model_path=model_path)
+        # run_agent(agent_type="DQN", env_id=env_id, max_steps=1000, model_path="./stable-baseline/training/output/LunarLander-v2/lunarlander1/lunarlander1_best_model")
